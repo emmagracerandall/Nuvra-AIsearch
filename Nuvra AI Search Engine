@@ -342,6 +342,7 @@ app.listen(3000, () => console.log("✅ Spark backend running on http://localhos
 npm init -y
 npm install express node-fetch cors
 export OPENAI_API_KEY=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
+node server.js
 
 </body>
 </html>
