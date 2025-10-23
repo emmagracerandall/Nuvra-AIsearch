@@ -344,5 +344,180 @@ npm install express node-fetch cors
 export OPENAI_API_KEY=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
 node server.js
 
+nuvra-spark-extension/
+manifest.json
+content.js
+spark.html
+spark.css
+{
+  "manifest_version": 3,
+  "name": "Nuvra Spark",
+  "version": "1.0",
+  "description": "Your everywhere AI assistant by Nuvra.",
+  "permissions": ["activeTab", "storage", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["spark.html", "spark.css"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "icons": {
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+}
+<div id="spark-assistant">
+  <div id="spark-header">
+    <span>⚡ Nuvra Spark</span>
+    <button id="spark-close">×</button>
+  </div>
+  <div id="spark-messages"></div>
+  <div id="spark-input-area">
+    <input id="spark-input" placeholder="Ask me anything..." />
+    <button id="spark-send">➤</button>
+  </div>
+</div>
+#spark-assistant {
+  position: fixed;
+  bottom: 90px;
+  right: 30px;
+  width: 320px;
+  height: 420px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 999999;
+}
+
+#spark-header {
+  background: linear-gradient(90deg, #7b2ff7, #f107a3);
+  color: white;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#spark-messages {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+#spark-input-area {
+  display: flex;
+  border-top: 1px solid #ddd;
+}
+
+#spark-input {
+  flex: 1;
+  border: none;
+  padding: 8px;
+  outline: none;
+}
+
+#spark-send {
+  background: #7b2ff7;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+#spark-fab {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: linear-gradient(90deg, #7b2ff7, #f107a3);
+  color: white;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  font-size: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  z-index: 999998;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+(async function () {
+  // Add floating button
+  const fab = document.createElement("div");
+  fab.id = "spark-fab";
+  fab.textContent = "⚡";
+  document.body.appendChild(fab);
+
+  let iframe = null;
+
+  fab.addEventListener("click", () => {
+    if (iframe) {
+      iframe.remove();
+      iframe = null;
+      return;
+    }
+
+    iframe = document.createElement("iframe");
+    iframe.src = chrome.runtime.getURL("spark.html");
+    iframe.style.position = "fixed";
+    iframe.style.bottom = "0";
+    iframe.style.right = "0";
+    iframe.style.width = "340px";
+    iframe.style.height = "440px";
+    iframe.style.border = "none";
+    iframe.style.zIndex = "999999";
+    iframe.style.borderRadius = "20px";
+    document.body.appendChild(iframe);
+  });
+})();
+<script>
+const messages = document.getElementById("spark-messages");
+const input = document.getElementById("spark-input");
+const sendBtn = document.getElementById("spark-send");
+const closeBtn = document.getElementById("spark-close");
+
+sendBtn.onclick = sendMessage;
+closeBtn.onclick = () => window.frameElement.remove();
+
+async function sendMessage() {
+  const text = input.value.trim();
+  if (!text) return;
+  addMessage("user", text);
+  input.value = "";
+
+  const aiDiv = addMessage("ai", "Spark is thinking...");
+
+  const res = await fetch("http://localhost:3000/spark", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: text })
+  });
+
+  const data = await res.json();
+  aiDiv.textContent = data.reply;
+}
+
+function addMessage(role, content) {
+  const div = document.createElement("div");
+  div.className = role;
+  div.textContent = content;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+  return div;
+}
+</script>
+"http://localhost:3000/spark"
+
 </body>
 </html>
